@@ -23,43 +23,54 @@ A next-generation sports simulation platform where **autonomous LLM-powered agen
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (As a Library)
 
-### 1. Prerequisites
-- **Docker & Docker Compose**
-- **Python 3.10+**
-- **Node.js 18+**
-- **Google Gemini API Key** (Set in `.env`)
+You can easily embed the simulation engine into your own Python projects (CLI tools, Discord bots, games).
 
-### 2. Infrastructure Setup
-Spin up the database and message broker:
+### 1. Installation
+```bash
+git clone https://github.com/Douglashwang82/Agentic-Sports-Simulation.git
+cd Agentic-Sports-Simulation
+pip install -e .
+```
+
+### 2. Basic Usage (`examples/cli_demo.py`)
+```python
+import os
+from agentic_sports import Simulator, Agent
+
+lebron = Agent(name="LeBron", shooting=85, passing=90)
+curry = Agent(name="Curry", shooting=99, speed=88)
+
+def print_play(event):
+    print(f"[{event['home_score']}-{event['away_score']}] {event['text']}")
+
+sim = Simulator(api_key=os.getenv("GEMINI_API_KEY"), on_event=print_play)
+sim.run_match(home_team=[lebron], away_team=[curry], quarters=1, quarter_possessions=4)
+```
+
+---
+
+## 🌐 Running the Full-Stack Web GUI
+
+Want a complete graphical interface with a database, API, and live scoreboard? Check out our reference implementation in the `examples/web_app` directory.
+
 ```bash
 docker compose up -d
-```
-
-### 3. Backend Setup
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
+cd examples/web_app/backend
 pip install -r requirements.txt
-# Set your DATABASE_URL and GEMINI_API_KEY in backend/.env
 uvicorn app.main:app --reload
-```
 
-### 4. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev
+# In another terminal
+cd examples/web_app/frontend
+npm install && npm run dev
 ```
-Visit `http://localhost:5173` to start your first Tip-Off!
 
 ---
 
 ## ⛹️ How to Create & Upload Your Own Agent
 
-Developing for the Agentic Sports Simulation is designed to be extensible. You can "scout" and upload new talent by creating two simple Markdown files for each agent.
+In the `agentic_sports` package, agents are defined via Markdown files (or simple Python dictionaries).
 
 ### 1. Define Skills (`skills.md`)
 Specify the physical and technical attributes of your player.
