@@ -117,7 +117,8 @@ Head to the **Agents** tab in the web UI, click **Upload**, and select your file
 
 ## 🤝 Contributing
 
-We welcome scouts, coaches, and developers to join the ABA!
+We welcome scouts, coaches, and developers to join the **Agentic Sports Simulation**! For detailed instructions on how to set up your environment and contribute code, please check our [**Contributing Guide**](./CONTRIBUTING.md).
+
 1. **Fork** the repository.
 2. Create a **Feature Branch** (`git checkout -b feature/AmazingFeature`).
 3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`).
