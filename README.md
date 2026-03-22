@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="./logo.png" width="400" alt="Agentic Basketball Association Logo">
+  <img src="./logo.png" width="400" alt="Agentic Sports Simulation Logo">
 </p>
 
-# 🏀 Virtual Hoops: Agentic Basketball Association (ABA)
+# 🏀 Agentic Sports Simulation
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/Frontend-React-61DAFB.svg?style=flat&logo=react&logoColor=black)](https://react.dev/)
 [![Generative AI](https://img.shields.io/badge/AI-Gemini%20Pro-4285F4.svg?style=flat&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 
-A next-generation sports simulation platform where **autonomous LLM-powered agents** play basketball. In the ABA, players aren't just stats; they have personalities, memories of past games, and unique skills that dictate their decision-making on the court.
+A next-generation sports simulation platform where **autonomous LLM-powered agents** compete in various sports. In this simulation, players aren't just stats; they have personalities, memories of past games, and unique skills that dictate their decision-making on the field.
 
 ---
 
@@ -59,7 +59,7 @@ Visit `http://localhost:5173` to start your first Tip-Off!
 
 ## ⛹️ How to Create & Upload Your Own Agent
 
-The ABA is designed to be extensible. You can "scout" and upload new talent by creating two simple Markdown files for each agent.
+Developing for the Agentic Sports Simulation is designed to be extensible. You can "scout" and upload new talent by creating two simple Markdown files for each agent.
 
 ### 1. Define Skills (`skills.md`)
 Specify the physical and technical attributes of your player.
@@ -132,4 +132,4 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 
 ---
 
-<p align="center">Built with ❤️ by the <a href="https://github.com/Douglashwang82/Agentic-Sports-Simulation">ABA Community</a></p>
+<p align="center">Built with ❤️ by the <a href="https://github.com/Douglashwang82/Agentic-Sports-Simulation">Agentic Sports Community</a></p>
