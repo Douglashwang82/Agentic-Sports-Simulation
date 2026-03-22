@@ -1,20 +1,21 @@
 """
-Game simulation service — powered by Google Gemini.
+Game simulation service — powered by Google Gemini 2.5 Flash.
 
-Each possession the LLM receives the full game state + all player profiles
-and generates a structured JSON play event. This replaces the old template
-/ random number approach entirely.
+Uses stateless generate_content per possession. Robustly extracts JSON
+from any response format (plain, fenced, with preamble text).
 """
 
 import json
 import os
+import re
 import time
 import redis as sync_redis
 
 from google import genai
 from google.genai import types
+from google.genai.errors import ClientError
 
-from app.config import REDIS_URL, UPLOAD_DIR, GEMINI_API_KEY
+from app.config import REDIS_URL, GEMINI_API_KEY
 
 # ── Redis client ──────────────────────────────────────────────────────────────
 _redis = sync_redis.from_url(REDIS_URL)
@@ -22,70 +23,124 @@ _redis = sync_redis.from_url(REDIS_URL)
 # ── Gemini client ─────────────────────────────────────────────────────────────
 _genai_client = genai.Client(api_key=GEMINI_API_KEY)
 
+MODEL = "gemini-2.5-flash"
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Profile loader ────────────────────────────────────────────────────────────
 
 def _load_agent_profile(agent: dict) -> str:
-    """Read memory.md + skills.md from the agent's stored directory."""
+    """Return a compact one-liner agent summary for the system prompt."""
     path = agent.get("profile_storage_path", "")
-    parts = [f"## 球員：{agent['name']}\n"]
+    name = agent["name"]
 
-    for fname, label in [("memory.md", "記憶 / 背景"), ("skills.md", "技能 / 能力")]:
-        full_path = os.path.join(path, fname)
-        if os.path.exists(full_path):
+    mem, ski = "", ""
+    for fname, var in (("memory.md", "mem"), ("skills.md", "ski")):
+        full_path = os.path.join(path, fname) if path else ""
+        if full_path and os.path.exists(full_path):
             with open(full_path, "r", errors="replace") as f:
-                content = f.read().strip()
-            parts.append(f"### {label}\n{content}\n")
-        else:
-            parts.append(f"### {label}\n（無檔案）\n")
+                content = f.read().strip()[:250]  # cap to save tokens
+            if var == "mem":
+                mem = content
+            else:
+                ski = content
 
     stats = (
-        f"投籃={agent.get('shooting', 75)} 防守={agent.get('defense', 70)} "
-        f"傳球={agent.get('passing', 70)} 速度={agent.get('speed', 70)} "
-        f"體力={agent.get('stamina', 70)}"
+        f"投={agent.get('shooting', 75):.0f} "
+        f"守={agent.get('defense', 70):.0f} "
+        f"傳={agent.get('passing', 70):.0f} "
+        f"速={agent.get('speed', 70):.0f} "
+        f"耐={agent.get('stamina', 70):.0f}"
     )
-    parts.append(f"### 數值屬性\n{stats}\n")
-    return "\n".join(parts)
+    profile_parts = [f"【{name}】{stats}"]
+    if mem:
+        profile_parts.append(f"背景：{mem}")
+    if ski:
+        profile_parts.append(f"技能：{ski}")
+    return " | ".join(profile_parts)
 
 
 def _build_system_prompt(home_agents: list[dict], away_agents: list[dict]) -> str:
-    home_profiles = "\n\n".join(_load_agent_profile(a) for a in home_agents)
-    away_profiles = "\n\n".join(_load_agent_profile(a) for a in away_agents)
+    home_lines = "\n".join(_load_agent_profile(a) for a in home_agents)
+    away_lines = "\n".join(_load_agent_profile(a) for a in away_agents)
+    home_names = "、".join(a["name"] for a in home_agents)
+    away_names = "、".join(a["name"] for a in away_agents)
 
-    home_names = ", ".join(a["name"] for a in home_agents)
-    away_names = ", ".join(a["name"] for a in away_agents)
+    return f"""你是籃球比賽模擬器。根據球員個性和技能模擬每個進攻回合。
 
-    return f"""你是一個超級擬真的籃球比賽模擬器，負責模擬一場充滿個性的AI球員比賽。
+主隊（{home_names}）:
+{home_lines}
 
-## 主隊球員（Home）：{home_names}
-{home_profiles}
+客隊（{away_names}）:
+{away_lines}
 
-## 客隊球員（Away）：{away_names}
-{away_profiles}
-
-## 規則
-- 每次收到指令時，你必須模擬一個回合（possession）。
-- **你的輸出必須是一個合法的 JSON，不帶任何 Markdown 格式，直接輸出 JSON。**
-- JSON 格式如下：
-{{
-  "text": "一段生動的比賽描述，必須根據球員性格和技能自然呈現，100字以內",
-  "pts": 0
-}}
-- "pts" 是本回合得分（0、2 或 3 分）。
-- 請務必讓球員性格、記憶和技能真實影響每個回合的結果和描述。
-- 輪流讓主隊和客隊進攻；你在每次 prompt 中都會被指定攻守方，請遵守。
-- 可以有失誤（turnover）、封堵（block）、籃板（rebound）等各種結果，pts=0。
-- 用繁體中文描述比賽。"""
+只回傳 JSON，格式：{{"text":"繁體中文描述20字內","pts":2}}
+pts 只能是 0/2/3；失誤/被封/未進=0。讓球員性格和技能真實影響結果。不要任何說明文字。"""
 
 
-def _parse_llm_response(text: str) -> dict:
-    """Extract the JSON object from the LLM response, handling markdown fences."""
-    # Strip ```json ... ``` if present
-    text = text.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
-    return json.loads(text.strip())
+def _extract_json(raw: str) -> dict:
+    """
+    Extract the first JSON object from an arbitrary string.
+    Handles: plain JSON, markdown fences, preamble text.
+    """
+    if not raw:
+        raise ValueError("Empty response")
+
+    # Strategy 1: Try direct parse
+    try:
+        return json.loads(raw.strip())
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: Extract from ```json ... ``` fences
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
+    if fence:
+        return json.loads(fence.group(1))
+
+    # Strategy 3: Find first {...} object in the response
+    brace = re.search(r"\{[^{}]*\}", raw, re.DOTALL)
+    if brace:
+        return json.loads(brace.group(0))
+
+    raise ValueError(f"No JSON found in: {raw[:200]!r}")
+
+
+def _call_llm(system_prompt: str, user_prompt: str, retries: int = 4) -> dict:
+    """Call Gemini with retry on 429 rate-limit errors."""
+    last_exc = None
+    for attempt in range(retries):
+        try:
+            response = _genai_client.models.generate_content(
+                model=MODEL,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.9,
+                    max_output_tokens=200,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
+                ),
+            )
+            data = _extract_json(response.text)
+            pts = int(data.get("pts", 0))
+            if pts not in (0, 2, 3):
+                pts = 0
+            text = str(data.get("text", "")).strip()
+            return {"text": text, "pts": pts}
+
+        except ClientError as e:
+            last_exc = e
+            if e.status_code == 429 and attempt < retries - 1:
+                wait = 65 * (attempt + 1)
+                print(f"[game_engine] 429 rate-limit — waiting {wait}s (attempt {attempt + 1})")
+                time.sleep(wait)
+            else:
+                raise
+
+        except (ValueError, json.JSONDecodeError) as e:
+            last_exc = e
+            print(f"[game_engine] JSON parse error attempt {attempt}: {e!r}")
+            if attempt < retries - 1:
+                time.sleep(2)
+
+    raise RuntimeError(f"LLM call failed after {retries} attempts: {last_exc}")
 
 
 # ── Main simulation ───────────────────────────────────────────────────────────
@@ -97,68 +152,54 @@ def simulate_match(
     quarters: int = 4,
     quarter_possessions: int = 12,
 ):
-    """Run a full LLM-simulated game and publish events to Redis Pub/Sub."""
     channel = f"match:{match_id}:events"
     home_score = 0
     away_score = 0
 
-    home_names = [a["name"] for a in home_agents] or ["主隊球員"]
-    away_names = [a["name"] for a in away_agents] or ["客隊球員"]
+    home_names = [a["name"] for a in home_agents] or ["主隊"]
+    away_names = [a["name"] for a in away_agents] or ["客隊"]
 
-    # ── Build system prompt from agent profiles ────────────────────────────
     system_prompt = _build_system_prompt(home_agents, away_agents)
 
-    # ── Start a multi-turn chat session so the LLM has game history ────────
-    chat = _genai_client.chats.create(
-        model="gemini-2.0-flash",
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.85,
-            max_output_tokens=256,
-        ),
-    )
-
-    # ── Kick-off event ─────────────────────────────────────────────────────
     _publish(channel, {
-        "type": "system",
-        "quarter": 0,
-        "text": f"🏀 比賽即將開始！{' vs '.join(home_names[:1] + away_names[:1])} — 讓我們看看 AI 球員如何應戰！",
-        "home_score": 0,
-        "away_score": 0,
+        "type": "system", "quarter": 0,
+        "text": f"🏀 比賽開始！{home_names[0]} vs {away_names[0]}",
+        "home_score": 0, "away_score": 0,
     })
-    time.sleep(1)
+    time.sleep(0.5)
 
     for q in range(1, quarters + 1):
         _publish(channel, {
-            "type": "system",
-            "quarter": q,
+            "type": "system", "quarter": q,
             "text": f"─── 第 {q} 節 ───",
-            "home_score": home_score,
-            "away_score": away_score,
+            "home_score": home_score, "away_score": away_score,
         })
-        time.sleep(0.4)
+        time.sleep(0.3)
 
         for pos in range(quarter_possessions):
             is_home = pos % 2 == 0
-            offense_team = "主隊（Home）" if is_home else "客隊（Away）"
-            defense_team = "客隊（Away）" if is_home else "主隊（Home）"
+            offense = "主隊" if is_home else "客隊"
+            defense = "客隊" if is_home else "主隊"
+            off_players = "、".join(a["name"] for a in (home_agents if is_home else away_agents))
+            def_players = "、".join(a["name"] for a in (away_agents if is_home else home_agents))
 
-            prompt = (
-                f"第 {q} 節，第 {pos + 1} 次進攻。"
-                f"現在 {offense_team} 持球進攻，{defense_team} 防守。"
-                f"當前比分：主隊 {home_score} — 客隊 {away_score}。"
-                "請模擬這個回合，輸出合法 JSON。"
+            user_prompt = (
+                f"第{q}節 第{pos+1}回合。"
+                f"{offense}持球（{off_players}），{defense}防守（{def_players}）。"
+                f"比分：主隊{home_score}-客隊{away_score}。"
+                f"模擬這個進攻回合，只回傳JSON，不要其他文字。"
             )
 
+            pts = 0
+            text = ""
             try:
-                response = chat.send_message(prompt)
-                event_data = _parse_llm_response(response.text)
-                text = event_data.get("text", "比賽繼續...")
-                pts = int(event_data.get("pts", 0))
-            except Exception as e:
-                # Fallback if LLM fails or JSON is malformed
-                text = f"{'主隊' if is_home else '客隊'} 進行進攻..."
+                result = _call_llm(system_prompt, user_prompt)
+                text = result["text"]
+                pts = result["pts"]
+            except Exception as exc:
+                text = f"{offense} 繼續進攻..."
                 pts = 0
+                print(f"[game_engine] Unrecoverable error q={q} pos={pos}: {exc}")
 
             if is_home:
                 home_score += pts
@@ -166,22 +207,25 @@ def simulate_match(
                 away_score += pts
 
             _publish(channel, {
-                "type": "play",
-                "quarter": q,
-                "text": text,
-                "home_score": home_score,
-                "away_score": away_score,
+                "type": "play", "quarter": q,
+                "text": text or f"{offense} 進行進攻...",
+                "home_score": home_score, "away_score": away_score,
             })
-            time.sleep(1.2)  # LLM calls take a moment; pace the stream
+            # 3.5s delay per call → ~17 calls/min, safely under 20 rpm free tier
+            time.sleep(3.5)
 
-    # ── Final buzzer ───────────────────────────────────────────────────────
-    winner = "主隊" if home_score > away_score else ("客隊" if away_score > home_score else "平局")
+    # Final
+    if home_score > away_score:
+        result_txt = "主隊勝利 🏆"
+    elif away_score > home_score:
+        result_txt = "客隊勝利 🏆"
+    else:
+        result_txt = "雙方平局！"
+
     _publish(channel, {
-        "type": "final",
-        "quarter": quarters,
-        "text": f"🏁 終場哨響！最終比分：主隊 {home_score} — 客隊 {away_score}。{'勝利者：' + winner if winner != '平局' else '精彩平局！'}",
-        "home_score": home_score,
-        "away_score": away_score,
+        "type": "final", "quarter": quarters,
+        "text": f"🏁 終場！主隊 {home_score} — 客隊 {away_score}。{result_txt}",
+        "home_score": home_score, "away_score": away_score,
     })
     return home_score, away_score
 
