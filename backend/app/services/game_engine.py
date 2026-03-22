@@ -61,19 +61,34 @@ def _load_agent_profile(agent: dict) -> str:
 def _build_system_prompt(home_agents: list[dict], away_agents: list[dict]) -> str:
     home_lines = "\n".join(_load_agent_profile(a) for a in home_agents)
     away_lines = "\n".join(_load_agent_profile(a) for a in away_agents)
-    home_names = "、".join(a["name"] for a in home_agents)
-    away_names = "、".join(a["name"] for a in away_agents)
+    home_names = "\u3001".join(a["name"] for a in home_agents)
+    away_names = "\u3001".join(a["name"] for a in away_agents)
+    home_count = len(home_agents)
+    away_count = len(away_agents)
 
-    return f"""你是籃球比賽模擬器。根據球員個性和技能模擬每個進攻回合。
+    # Build roster-aware constraint
+    roster_rules = []
+    if home_count == 1:
+        roster_rules.append(
+            f"\u4e3b\u968a\u53ea\u6709 1 \u4eba\uff08{home_names}\uff09\uff0c\u7d55\u5c0d\u4e0d\u80fd\u63cf\u8ff0\u50b3\u7403\u7d66\u968a\u53cb\u6216\u5c0b\u627e\u968a\u53cb\u7a7a\u6a94\u7684\u5834\u666f\u3002"
+        )
+    if away_count == 1:
+        roster_rules.append(
+            f"\u5ba2\u968a\u53ea\u6709 1 \u4eba\uff08{away_names}\uff09\uff0c\u7d55\u5c0d\u4e0d\u80fd\u63cf\u8ff0\u50b3\u7403\u7d66\u968a\u53cb\u6216\u5c0b\u627e\u968a\u53cb\u7a7a\u6a94\u7684\u5834\u666f\u3002"
+        )
+    roster_constraint = "\n".join(roster_rules)
 
-主隊（{home_names}）:
+    return f"""\u4f60\u662f\u7c43\u7403\u6bd4\u8cfd\u6a21\u64ec\u5668\u3002\u6839\u64da\u7403\u54e1\u500b\u6027\u548c\u6280\u80fd\u6a21\u64ec\u6bcf\u500b\u9032\u653b\u56de\u5408\u3002
+
+\u4e3b\u968a\uff08{home_names}\uff0c\u5171 {home_count} \u4eba\uff09:
 {home_lines}
 
-客隊（{away_names}）:
+\u5ba2\u968a\uff08{away_names}\uff0c\u5171 {away_count} \u4eba\uff09:
 {away_lines}
 
-只回傳 JSON，格式：{{"text":"繁體中文描述20字內","pts":2}}
-pts 只能是 0/2/3；失誤/被封/未進=0。讓球員性格和技能真實影響結果。不要任何說明文字。"""
+\u53ea\u56de\u50b3 JSON\uff0c\u683c\u5f0f\uff1a{{"text":"\u7e41\u9ad4\u4e2d\u6587\u63cf\u8ff020\u5b57\u5167","pts":2}}
+pts \u53ea\u80fd\u662f 0/2/3\uff1b\u5931\u8aa4/\u88ab\u5c01/\u672a\u9032=0\u3002\u8b93\u7403\u54e1\u6027\u683c\u548c\u6280\u80fd\u771f\u5be6\u5f71\u97ff\u7d50\u679c\u3002\u4e0d\u8981\u4efb\u4f55\u8aaa\u660e\u6587\u5b57\u3002
+{roster_constraint}"""
 
 
 def _extract_json(raw: str) -> dict:
@@ -180,14 +195,24 @@ def simulate_match(
             is_home = pos % 2 == 0
             offense = "主隊" if is_home else "客隊"
             defense = "客隊" if is_home else "主隊"
-            off_players = "、".join(a["name"] for a in (home_agents if is_home else away_agents))
-            def_players = "、".join(a["name"] for a in (away_agents if is_home else home_agents))
+            off_agents = home_agents if is_home else away_agents
+            def_agents = away_agents if is_home else home_agents
+            off_players = "\u3001".join(a["name"] for a in off_agents)
+            def_players = "\u3001".join(a["name"] for a in def_agents)
+            off_count = len(off_agents)
+
+            # Tell the LLM exactly how many teammates the ball-handler has
+            if off_count == 1:
+                teammate_hint = f"\u8a3b\u610f\uff1a\u9032\u653b\u65b9\u53ea\u6709 {off_players} \u4e00\u4eba\uff0c\u7d55\u5c0d\u4e0d\u53ef\u63cf\u8ff0\u50b3\u7403\u7d66\u968a\u53cb\u3002"
+            else:
+                teammate_hint = f"\u9032\u653b\u65b9\u521d\u5171 {off_count} \u4eba\u5728\u5834\u3002"
 
             user_prompt = (
-                f"第{q}節 第{pos+1}回合。"
-                f"{offense}持球（{off_players}），{defense}防守（{def_players}）。"
-                f"比分：主隊{home_score}-客隊{away_score}。"
-                f"模擬這個進攻回合，只回傳JSON，不要其他文字。"
+                f"\u7b2c{q}\u7bc0 \u7b2c{pos+1}\u56de\u5408\u3002"
+                f"{offense}\u6301\u7403\uff08{off_players}\uff09\uff0c{defense}\u9632\u5b88\uff08{def_players}\uff09\u3002"
+                f"\u6bd4\u5206\uff1a\u4e3b\u968a{home_score}-\u5ba2\u968a{away_score}\u3002"
+                f"{teammate_hint}"
+                f"\u53ea\u56de\u50b3JSON\u3002"
             )
 
             pts = 0
