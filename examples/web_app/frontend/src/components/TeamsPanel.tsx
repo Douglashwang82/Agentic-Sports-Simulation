@@ -48,7 +48,7 @@ export default function TeamsPanel() {
       setSelected([]);
       await load();
     } catch {
-      alert("建立隊伍失敗");
+      alert("Failed to create team");
     }
   };
 
@@ -60,22 +60,22 @@ export default function TeamsPanel() {
   return (
     <div>
       <div className="card mb-32">
-        <h3 className="section-title">🏟️ 組建隊伍</h3>
+        <h3 className="section-title">🏟️ Build Teams</h3>
         <form onSubmit={handleCreate}>
           <div className="form-group">
-            <label>隊伍名稱</label>
+            <label>Team Name</label>
             <input
               className="input"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
-              placeholder="例：神經網路隊"
+              placeholder="e.g. Neural Network Team"
             />
           </div>
           <div className="form-group">
-            <label>選擇球員（1–5 名）</label>
+            <label>Select Players (1–5)</label>
             {agents.length === 0 ? (
               <p style={{ color: "var(--text-2)", fontSize: "0.9rem" }}>
-                目前沒有可用的球員。請先建立球員！
+                No available agents. Please create agents first!
               </p>
             ) : (
               agents.map((a) => (
@@ -98,7 +98,7 @@ export default function TeamsPanel() {
             className="btn btn-orange btn-block"
             disabled={!teamName || selected.length === 0}
           >
-            🛡️ 建立隊伍（{selected.length}/5）
+            🛡️ Create Team ({selected.length}/5)
           </button>
         </form>
       </div>
@@ -106,13 +106,13 @@ export default function TeamsPanel() {
       {teams.length === 0 ? (
         <div className="empty-state">
           <div className="icon">🛡️</div>
-          <p>目前沒有隊伍。在上方建立你的第一支隊伍吧！</p>
+          <p>No teams yet. Create your first team above!</p>
         </div>
       ) : (
         <div className="card-grid">
           {teams.map((t) => (
             <div key={t.id} className="card agent-card">
-              <button className="agent-delete" onClick={() => handleDelete(t.id)} title="刪除">
+              <button className="agent-delete" onClick={() => handleDelete(t.id)} title="Delete">
                 ✕
               </button>
               <div className="agent-name">{t.name}</div>

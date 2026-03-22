@@ -62,7 +62,7 @@ export default function ArenaPanel() {
       await new Promise((r) => setTimeout(r, 500));
       await api.startMatch(m.id);
     } catch {
-      alert("比賽啟動失敗，請確認後端是否正常運行。");
+      alert("Match failed to start. Please ensure the backend is running correctly.");
     }
   };
 
@@ -75,47 +75,47 @@ export default function ArenaPanel() {
     setAwayId(null);
   };
 
-  const homeName = teams.find((t) => t.id === homeId)?.name ?? "主隊";
-  const awayName = teams.find((t) => t.id === awayId)?.name ?? "客隊";
+  const homeName = teams.find((t) => t.id === homeId)?.name ?? "Home Team";
+  const awayName = teams.find((t) => t.id === awayId)?.name ?? "Away Team";
 
   return (
     <div>
       {status === "idle" && (
         <div className="card mb-32">
-          <h3 className="section-title">⚔️ 設定比賽</h3>
+          <h3 className="section-title">⚔️ Match Setup</h3>
           {teams.length < 2 ? (
             <p style={{ color: "var(--text-2)" }}>
-              至少需要 2 支隊伍才能開賽。請先到「隊伍」頁面建立隊伍！
+              At least 2 teams are required to start. Please create teams first!
             </p>
           ) : (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 <div className="form-group">
-                  <label>主隊</label>
+                  <label>Home Team</label>
                   <select
                     className="input"
                     value={homeId ?? ""}
                     onChange={(e) => setHomeId(Number(e.target.value))}
                   >
-                    <option value="">選擇隊伍…</option>
+                    <option value="">Select Team…</option>
                     {teams.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.name}（{t.agents.length} 名球員）
+                        {t.name} ({t.agents.length} Players)
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>客隊</label>
+                  <label>Away Team</label>
                   <select
                     className="input"
                     value={awayId ?? ""}
                     onChange={(e) => setAwayId(Number(e.target.value))}
                   >
-                    <option value="">選擇隊伍…</option>
+                    <option value="">Select Team…</option>
                     {teams.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.name}（{t.agents.length} 名球員）
+                        {t.name} ({t.agents.length} Players)
                       </option>
                     ))}
                   </select>
@@ -127,7 +127,7 @@ export default function ArenaPanel() {
                 onClick={handleStart}
                 style={{ marginTop: 8 }}
               >
-                🏀 開球！
+                🏀 Tip Off!
               </button>
             </>
           )}
@@ -139,7 +139,7 @@ export default function ArenaPanel() {
           {/* Scoreboard */}
           <div className="scoreboard">
             <span className={`score-status ${status}`}>
-              {status === "live" ? "● 直播中" : "✓ 比賽結束"}
+              {status === "live" ? "● LIVE" : "✓ FINISHED"}
             </span>
             <div className="score-display">
               <div>
@@ -157,18 +157,18 @@ export default function ArenaPanel() {
           {/* Feed */}
           <div className="card">
             <h3 className="section-title" style={{ marginBottom: 12 }}>
-              📺 即時播報
+              📺 Live Feed
             </h3>
             <div className="feed" ref={feedRef}>
               {events.map((ev, i) => (
                 <div key={i} className={`feed-item ${ev.type}`}>
-                  <span className="feed-quarter">第{ev.quarter}節</span>
+                  <span className="feed-quarter">Q{ev.quarter}</span>
                   <span className="feed-text">{ev.text}</span>
                 </div>
               ))}
               {events.length === 0 && (
                 <p style={{ textAlign: "center", color: "var(--text-2)", padding: 32 }}>
-                  等待開球中…
+                  Waiting for Tip-Off…
                 </p>
               )}
             </div>
@@ -176,7 +176,7 @@ export default function ArenaPanel() {
 
           {status === "finished" && (
             <button className="btn btn-ghost btn-block mt-12" onClick={handleReset}>
-              ← 開始新比賽
+              ← Start New Match
             </button>
           )}
         </>

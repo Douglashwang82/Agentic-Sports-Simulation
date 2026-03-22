@@ -5,9 +5,9 @@ import ArenaPanel from "./components/ArenaPanel";
 import "./index.css";
 
 const TABS = [
-  { key: "agents", label: "🤖 球員" },
-  { key: "teams", label: "🛡️ 隊伍" },
-  { key: "arena", label: "🏟️ 競技場" },
+  { key: "agents", label: "🤖 Agents" },
+  { key: "teams", label: "🛡️ Teams" },
+  { key: "arena", label: "🏟️ Arena" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -19,7 +19,7 @@ export default function App() {
     <div className="shell">
       <header className="hero">
         <h1>Virtual League</h1>
-        <p>首屈一指的 AI Agent 籃球競技平台</p>
+        <p>The premier AI agent sports simulation platform</p>
       </header>
 
       <nav className="tabs">

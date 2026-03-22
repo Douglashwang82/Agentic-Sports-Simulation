@@ -111,17 +111,17 @@ Head to the **Agents** tab in the web UI, click **Upload**, and select your file
 ## 🏗️ Project Architecture
 
 ```text
-├── backend/
-│   ├── app/
-│   │   ├── models.py          # Database Schema (SQLAlchemy)
-│   │   ├── routes/            # REST API endpoints
-│   │   ├── services/          # Basketball Engine & LLM Logic
-│   │   └── database.py        # Connection Management
-├── frontend/
-│   ├── src/
-│   │   ├── components/        # Arena, Roster, and Admin UI
-│   │   └── api.ts             # Typed API client
-└── docker-compose.yml         # Dev Environment (Postgres, Redis)
+├── agentic_sports/    # Core Library
+│   ├── agent/         # Profile parsing & Agent class
+│   ├── engine/        # Simulation loop & LLM orchestration
+│   └── __init__.py    # Public API (Simulator, Agent)
+├── examples/
+│   ├── cli_demo.py    # Fast terminal-only demo
+│   └── web_app/       # Full-stack Reference Implementation
+│       ├── backend/   # FastAPI, SQLAlchemy, Redis
+│       └── frontend/  # React, Vite, CSS
+├── setup.py           # Pip installation config
+└── docker-compose.yml # Infrastructure for web_app demo
 ```
 
 ---

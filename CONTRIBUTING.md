@@ -17,26 +17,28 @@ git clone https://github.com/Douglashwang82/Agentic-Sports-Simulation.git
 cd Agentic-Sports-Simulation
 ```
 
-#### 2. Local Infrastructure
+#### 2. Install the Core Library
 ```bash
-docker compose up -d
+pip install -e .
 ```
 
-#### 3. Backend (Python/FastAPI)
+#### 3. Web App Reference Implementation (Python/FastAPI)
+- Navigate to the backend: `cd examples/web_app/backend`
 - Create a virtual environment: `python -m venv venv`
 - Install dependencies: `pip install -r requirements.txt`
 - Copy `.env.example` to `.env` and add your `GEMINI_API_KEY`.
 - Start the server: `uvicorn app.main:app --reload`
 
-#### 4. Frontend (TypeScript/React/Vite)
+#### 4. Web App UI (TypeScript/React/Vite)
+- Navigate to the frontend: `cd examples/web_app/frontend`
 - Install dependencies: `npm install`
 - Start the dev server: `npm run dev`
 
 ## 📜 Coding Guidelines
 
 - **Style**: Follow PEP 8 for Python and use Prettier/ESLint for TypeScript.
-- **Modularity**: Keep the `game_engine` modular. Each sport should be clearly encapsulated or follow the existing basketball pattern.
-- **Testing**: We appreciate tests! Add them to `backend/tests/` if possible.
+- **Modularity**: Keep the `agentic_sports` core library framework-agnostic. Use callbacks for any external side effects (like Redis or UI logging).
+- **Testing**: We appreciate tests! Add them to `tests/` if possible.
 
 ## 📬 Pull Request Process
 

@@ -36,7 +36,7 @@ export default function AgentsPanel() {
       setSkillFile(null);
       await load();
     } catch {
-      alert("上傳失敗 — 請確認後端伺服器是否已啟動。");
+      alert("Upload failed — please check if the backend server is running.");
     }
     setLoading(false);
   };
@@ -50,22 +50,22 @@ export default function AgentsPanel() {
     <div>
       {/* Upload form */}
       <div className="card mb-32">
-        <h3 className="section-title">🧬 建立新球員</h3>
+        <h3 className="section-title">🧬 Create New Player</h3>
         <form onSubmit={handleCreate}>
           <div className="form-group">
-            <label>球員名稱</label>
+            <label>Player Name</label>
             <input
               className="input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="例：賽博喬丹"
+              placeholder="e.g. Cyber Jordan"
             />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div className="form-group">
-              <label>記憶檔案 (.md)</label>
+              <label>Memory File (.md)</label>
               <label className="file-drop">
-                {memFile ? `✅ ${memFile.name}` : "拖曳或點擊選擇檔案"}
+                {memFile ? `✅ ${memFile.name}` : "Drag or click to select"}
                 <input
                   type="file"
                   accept=".md"
@@ -75,9 +75,9 @@ export default function AgentsPanel() {
               </label>
             </div>
             <div className="form-group">
-              <label>技能檔案 (.md)</label>
+              <label>Skills File (.md)</label>
               <label className="file-drop">
-                {skillFile ? `✅ ${skillFile.name}` : "拖曳或點擊選擇檔案"}
+                {skillFile ? `✅ ${skillFile.name}` : "Drag or click to select"}
                 <input
                   type="file"
                   accept=".md"
@@ -92,7 +92,7 @@ export default function AgentsPanel() {
             className="btn btn-primary btn-block"
             disabled={loading || !name || !memFile || !skillFile}
           >
-            {loading ? "初始化中…" : "⚡ 初始化球員"}
+            {loading ? "Initializing..." : "⚡ Initialize Player"}
           </button>
         </form>
       </div>
@@ -101,7 +101,7 @@ export default function AgentsPanel() {
       {agents.length === 0 ? (
         <div className="empty-state">
           <div className="icon">🤖</div>
-          <p>目前沒有球員。上傳記憶和技能檔案來建立你的第一位 AI 球員吧！</p>
+          <p>No agents yet. Upload memory and skills files to create your first player!</p>
         </div>
       ) : (
         <div className="card-grid">

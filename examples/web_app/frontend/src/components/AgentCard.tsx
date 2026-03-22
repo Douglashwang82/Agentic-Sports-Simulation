@@ -55,11 +55,11 @@ export default function AgentCard({ agent, onDelete, compact }: Props) {
   const accentColor = palette[0];
 
   const stats = [
-    { label: "投籃", value: agent.shooting },
-    { label: "防守", value: agent.defense },
-    { label: "傳球", value: agent.passing },
-    { label: "速度", value: agent.speed },
-    { label: "體力", value: agent.stamina },
+    { label: "SHT", value: agent.shooting },
+    { label: "DEF", value: agent.defense },
+    { label: "PAS", value: agent.passing },
+    { label: "SPD", value: agent.speed },
+    { label: "STA", value: agent.stamina },
   ];
 
   const overall = Math.round(stats.reduce((s, v) => s + v.value, 0) / stats.length);
@@ -67,7 +67,7 @@ export default function AgentCard({ agent, onDelete, compact }: Props) {
   return (
     <div className={`ac ${compact ? "ac--compact" : ""}`} style={{ background: gradientBg }}>
       {onDelete && (
-        <button className="ac-delete" onClick={() => onDelete(agent.id)} title="刪除球員">
+        <button className="ac-delete" onClick={() => onDelete(agent.id)} title="Delete Agent">
           ✕
         </button>
       )}

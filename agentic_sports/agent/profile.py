@@ -43,15 +43,15 @@ class Agent:
 
     def to_prompt_string(self) -> str:
         stats = (
-            f"投={self.shooting:.0f} "
-            f"守={self.defense:.0f} "
-            f"傳={self.passing:.0f} "
-            f"速={self.speed:.0f} "
-            f"耐={self.stamina:.0f}"
+            f"SHT={self.shooting:.0f} "
+            f"DEF={self.defense:.0f} "
+            f"PAS={self.passing:.0f} "
+            f"SPD={self.speed:.0f} "
+            f"STA={self.stamina:.0f}"
         )
-        profile_parts = [f"【{self.name}】{stats}"]
+        profile_parts = [f"[{self.name}] {stats}"]
         if self.memory:
-            profile_parts.append(f"背景：{self.memory}")
+            profile_parts.append(f"Backstory: {self.memory}")
         if self.skills:
-            profile_parts.append(f"技能：{self.skills}")
+            profile_parts.append(f"Skills: {self.skills}")
         return " | ".join(profile_parts)
