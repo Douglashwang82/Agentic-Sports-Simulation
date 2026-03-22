@@ -7,6 +7,7 @@ from any response format (plain, fenced, with preamble text).
 
 import json
 import os
+import random
 import re
 import time
 import redis as sync_redis
@@ -197,22 +198,28 @@ def simulate_match(
             defense = "客隊" if is_home else "主隊"
             off_agents = home_agents if is_home else away_agents
             def_agents = away_agents if is_home else home_agents
-            off_players = "\u3001".join(a["name"] for a in off_agents)
-            def_players = "\u3001".join(a["name"] for a in def_agents)
+            off_players = "、".join(a["name"] for a in off_agents)
+            def_players = "、".join(a["name"] for a in def_agents)
             off_count = len(off_agents)
+
+            # Randomly assign ball-handler + primary defender for this possession
+            # This breaks LLM name-bias (e.g. always writing Jordan as the scorer)
+            ball_handler = random.choice(off_agents)["name"]
+            primary_defender = random.choice(def_agents)["name"]
 
             # Tell the LLM exactly how many teammates the ball-handler has
             if off_count == 1:
-                teammate_hint = f"\u8a3b\u610f\uff1a\u9032\u653b\u65b9\u53ea\u6709 {off_players} \u4e00\u4eba\uff0c\u7d55\u5c0d\u4e0d\u53ef\u63cf\u8ff0\u50b3\u7403\u7d66\u968a\u53cb\u3002"
+                teammate_hint = f"註意：進攻方只有 {off_players} 一人，絕對不可描述傳球給隊友。"
             else:
-                teammate_hint = f"\u9032\u653b\u65b9\u521d\u5171 {off_count} \u4eba\u5728\u5834\u3002"
+                teammate_hint = f"進攻方共 {off_count} 人在場。"
 
             user_prompt = (
-                f"\u7b2c{q}\u7bc0 \u7b2c{pos+1}\u56de\u5408\u3002"
-                f"{offense}\u6301\u7403\uff08{off_players}\uff09\uff0c{defense}\u9632\u5b88\uff08{def_players}\uff09\u3002"
-                f"\u6bd4\u5206\uff1a\u4e3b\u968a{home_score}-\u5ba2\u968a{away_score}\u3002"
+                f"第{q}節 第{pos+1}回合。"
+                f"{offense}持球（{off_players}\uff09，{defense}防守（{def_players}）。"
+                f"比分：主隊{home_score}-客隊{away_score}。"
                 f"{teammate_hint}"
-                f"\u53ea\u56de\u50b3JSON\u3002"
+                f"本回合主要持球者是「{ball_handler}」，主要防守者是「{primary_defender}」。"
+                f"請以{ball_handler}為主角描述這個進攻回合。只回傳JSON。"
             )
 
             pts = 0
