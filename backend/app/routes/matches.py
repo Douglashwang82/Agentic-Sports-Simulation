@@ -71,7 +71,19 @@ async def start_match(match_id: int, db: AsyncSession = Depends(get_db)):
         if not agent_ids:
             return []
         res = await db.execute(select(Agent).where(Agent.id.in_(agent_ids)))
-        return [{"id": a.id, "name": a.name} for a in res.scalars().all()]
+        return [
+            {
+                "id": a.id,
+                "name": a.name,
+                "profile_storage_path": a.profile_storage_path,
+                "shooting": a.shooting,
+                "defense": a.defense,
+                "passing": a.passing,
+                "speed": a.speed,
+                "stamina": a.stamina,
+            }
+            for a in res.scalars().all()
+        ]
 
     home_agents = await _get_agents(home_team.agent_ids)
     away_agents = await _get_agents(away_team.agent_ids)

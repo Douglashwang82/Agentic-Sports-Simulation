@@ -14,3 +14,4 @@ CORS_ORIGINS = os.getenv(
 ).split(",")
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./storage")
 API_PORT = int(os.getenv("API_PORT", "8000"))
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")

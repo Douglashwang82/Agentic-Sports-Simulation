@@ -1,0 +1,29 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/app/routes/__pycache__/
+backend/app/services/__pycache__/
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Environment / Secrets
+backend/.env
+.env
+.env.*
+
+# Uploads / Storage
+backend/storage/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS
+.DS_Store
+Thumbs.db
