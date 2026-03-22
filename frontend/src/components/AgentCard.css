@@ -1,0 +1,146 @@
+/* ── Agent Card ──────────────────────────────────── */
+.ac {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 24px 20px;
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.ac:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transform: translateY(-4px);
+}
+
+/* Delete button */
+.ac-delete {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+  z-index: 2;
+}
+.ac:hover .ac-delete { opacity: 1; }
+.ac-delete:hover { color: var(--red); }
+
+/* ── Avatar ─── */
+.ac-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+.ac-avatar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+}
+.ac-avatar-emoji {
+  font-size: 2.6rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  line-height: 1;
+}
+
+/* ── Header (name + overall) ─── */
+.ac-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ac-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-0);
+  letter-spacing: -0.01em;
+}
+.ac-overall {
+  width: 36px;
+  height: 36px;
+  border: 2px solid;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Stats ─── */
+.ac-stats {
+  width: 100%;
+}
+.ac-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.ac-stat-label {
+  width: 40px;
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+}
+.ac-stat-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ac-stat-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ac-stat-tier {
+  width: 28px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.tier-S { color: #fbbf24; }
+.tier-A { color: #22c55e; }
+.tier-B { color: #3b82f6; }
+.tier-C { color: #8b949e; }
+.tier-D { color: #6e7681; }
+
+/* ── Compact variant (for team selection etc.) ─── */
+.ac--compact {
+  padding: 16px;
+  flex-direction: row;
+  text-align: left;
+  gap: 16px;
+}
+.ac--compact .ac-avatar {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+.ac--compact .ac-avatar-emoji { font-size: 1.6rem; }
+.ac--compact .ac-header { margin-bottom: 8px; }
+.ac--compact .ac-stats { display: none; }
