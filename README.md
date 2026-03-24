@@ -5,6 +5,7 @@
 # 🏀 Agentic Sports Simulation
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/Frontend-React-61DAFB.svg?style=flat&logo=react&logoColor=black)](https://react.dev/)
 [![Generative AI](https://img.shields.io/badge/AI-Gemini%20Pro-4285F4.svg?style=flat&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
@@ -135,6 +136,14 @@ We welcome scouts, coaches, and developers to join the **Agentic Sports Simulati
 3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`).
 4. **Push** to the Branch (`git push origin feature/AmazingFeature`).
 5. Open a **Pull Request**.
+
+Please also review our [Code of Conduct](./CODE_OF_CONDUCT.md) to keep our community welcoming and safe.
+
+---
+
+## 🔒 Security
+
+If you discover any security vulnerabilities, please refer to our [Security Policy](./SECURITY.md) for information on how to report them securely.
 
 ---
 
